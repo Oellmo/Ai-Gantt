@@ -1,0 +1,14 @@
+{
+  "name": "generator-extension",
+  "version": "1.0.0",
+  "description": "",
+  "main": "generator.js",
+  "scripts": {},
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "openai": "^4.29.2"
+  }
+}

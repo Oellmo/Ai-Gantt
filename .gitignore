@@ -1,0 +1,25 @@
+# Environment variables
+# Never commit sensitive data. Add other .env files if you use them.
+.env
+.env.local
+.env.*.local
+
+# It's a good practice to have an example file that IS in git
+!/.env.example
+
+# Dependencies
+# These are installed via package managers like npm or yarn.
+/node_modules
+
+# Build output
+# This folder contains the compiled/minified version of the project.
+/dist
+/build
+
+# IDE & Editor configuration
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db

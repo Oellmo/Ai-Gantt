@@ -1,0 +1,155 @@
+<html><head>
+<meta charset="utf-8"/>
+<link crossorigin="" href="https://fonts.gstatic.com/" rel="preconnect"/>
+<link as="style" href="https://fonts.googleapis.com/css2?display=swap&amp;family=Inter%3Awght%40400%3B500%3B600%3B700%3B900&amp;family=Noto+Sans%3Awght%40400%3B500%3B700%3B900" onload="this.rel='stylesheet'" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<title>Stitch Design</title>
+<link href="data:image/x-icon;base64," rel="icon" type="image/x-icon"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<style type="text/tailwindcss">
+      :root {
+        --primary-color: #137fec;
+        --background-color: #0f172a;
+        --surface-color: #1e293b;
+        --surface-border-color: #334155;
+        --text-primary-color: #f8fafc;
+        --text-secondary-color: #94a3b8;
+      }
+      .dark {
+        --background-color: #0f172a;
+        --surface-color: #1e293b;
+        --surface-border-color: #334155;
+        --text-primary-color: #f8fafc;
+        --text-secondary-color: #94a3b8;
+      }
+      .light {
+        --background-color: #f8fafc;
+        --surface-color: #ffffff;
+        --surface-border-color: #e2e8f0;
+        --text-primary-color: #0f172a;
+        --text-secondary-color: #64748b;
+      }
+      .checkbox-custom:checked {
+        background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
+      }
+    </style>
+</head>
+<body class="bg-[var(--background-color)] font-sans text-[var(--text-primary-color)]">
+<div class="relative flex h-auto min-h-screen w-full flex-col dark group/design-root" style='font-family: Inter, "Noto Sans", sans-serif;'>
+<div class="layout-container flex h-full grow flex-col">
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-[var(--surface-border-color)] px-6 md:px-10 py-4">
+<div class="flex items-center gap-3 text-white">
+<svg class="h-8 w-8 text-[var(--primary-color)]" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path d="M6 6H42L36 24L42 42H6L12 24L6 6Z" fill="currentColor"></path></svg>
+<h2 class="text-[var(--text-primary-color)] text-xl font-bold">PlanifyAI</h2>
+</div>
+<div class="flex items-center gap-4">
+<button class="flex cursor-pointer items-center justify-center rounded-full h-10 w-10 bg-[var(--surface-color)] text-[var(--text-secondary-color)] hover:bg-opacity-80 transition-colors">
+<span class="material-symbols-outlined">light_mode</span>
+</button>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border-2 border-[var(--surface-border-color)]" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBg8bNJI1ckyUkZzEH4XnGDQJFcJsJV7MHUWip2f06MSmuZQWJJQM_6qGJJ4chTazhkK3ETLZoYTa17kg3HoIX2BnzKNKcYH4l9o83lDi7QgVq4p7ow0Jh9vBe2SiQf5kxfUE3nQ9i3jlktR49jaYvcE6dJYc0ct5OhmOR3mjb1dQGTtdnlacNlJ-dRBjKwIRqtELNHuYqQLMXQsqQ3kq9FjxfKLtF1br2-JpYtkmnoBRvu7eUUU-iVFGDuYQyNrbwMtE9fgJzrgLPZ");'></div>
+</div>
+</header>
+<main class="flex flex-1 justify-center py-8 px-4 sm:px-6 lg:px-8">
+<div class="w-full max-w-7xl space-y-12">
+<div class="text-center">
+<h1 class="text-4xl font-bold tracking-tighter text-[var(--text-primary-color)] sm:text-5xl">Gantt-Diagramme &amp; To-Do-Listen mit KI</h1>
+<p class="mt-4 text-lg text-[var(--text-secondary-color)]">
+                Beschreiben Sie Ihr Projekt in natürlicher Sprache und wir generieren den Rest.
+              </p>
+</div>
+<div class="bg-[var(--surface-color)] p-6 rounded-lg border border-[var(--surface-border-color)] shadow-lg">
+<div class="flex flex-col sm:flex-row items-end gap-4">
+<label class="flex-1 w-full">
+<span class="text-sm font-medium text-[var(--text-secondary-color)]">KI-Eingabe</span>
+<textarea id="ai-prompt-input" class="form-textarea mt-1 flex w-full min-w-0 flex-1 resize-y overflow-hidden rounded-md text-[var(--text-primary-color)] focus:outline-0 focus:ring-2 focus:ring-[var(--primary-color)] border border-[var(--surface-border-color)] bg-transparent placeholder:text-[var(--text-secondary-color)] p-3 text-base font-normal leading-normal min-h-[80px]" placeholder="Beispiel: Erstellen Sie einen Marketingplan für die Einführung eines neuen Produkts im nächsten Quartal..."></textarea>
+</label>
+<button id="generate-btn" class="flex items-center justify-center gap-2 rounded-md bg-[var(--primary-color)] px-6 py-3 text-base font-semibold text-white shadow-sm hover:bg-opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-color)] transition-all w-full sm:w-auto">
+<span class="material-symbols-outlined">auto_awesome</span>
+<span>Generieren</span>
+</button>
+</div>
+</div>
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-12">
+<div class="space-y-6 xl:col-span-2">
+<h2 class="text-2xl font-bold text-[var(--text-primary-color)] tracking-tight">Gantt-Diagramm</h2>
+<div class="overflow-hidden rounded-lg border border-[var(--surface-border-color)] bg-[var(--surface-color)] shadow-md p-4">
+<div class="relative grid grid-cols-[200px_1fr] gap-x-4">
+<div class="sticky left-0 bg-[var(--surface-color)]">
+<div class="h-12 border-b border-[var(--surface-border-color)] flex items-center px-4">
+<h3 class="text-sm font-semibold text-[var(--text-primary-color)]">Aufgaben</h3>
+</div>
+<div id="gantt-task-list" class="space-y-2 mt-2"></div>
+</div>
+<div class="overflow-x-auto">
+<div id="gantt-timeline-header" class="grid h-12 border-b border-[var(--surface-border-color)]" style="min-width: 1000px;">
+<!-- Timeline headers will be generated here by app.js -->
+</div>
+<div id="gantt-grid-container" class="relative grid h-auto divide-x divide-[var(--surface-border-color)]" style="min-width: 1000px;">
+<!-- Grid lines will be generated here by app.js -->
+<div id="gantt-chart-bars" class="absolute inset-0 space-y-2 mt-2"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="space-y-6 xl:col-span-1">
+<h2 class="text-2xl font-bold text-[var(--text-primary-color)] tracking-tight">To-Do-Liste</h2>
+<div class="rounded-lg border border-[var(--surface-border-color)] bg-[var(--surface-color)] p-6 shadow-md">
+<div id="todo-list-container" class="space-y-4"></div>
+<div class="mt-6">
+<button id="open-modal-btn" class="flex w-full items-center justify-center gap-2 rounded-md bg-[var(--primary-color)] px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-color)]">
+<span class="material-symbols-outlined text-base">add</span>
+<span>Neue Aufgabe hinzufügen</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<div id="add-task-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60">
+<div class="w-full max-w-md rounded-lg bg-[var(--surface-color)] p-6 shadow-2xl border border-[var(--surface-border-color)]">
+<div class="flex items-center justify-between border-b border-[var(--surface-border-color)] pb-4 mb-6">
+<h3 class="text-xl font-semibold text-[var(--text-primary-color)]">Neue Aufgabe erstellen</h3>
+<button id="close-modal-btn" class="text-[var(--text-secondary-color)] hover:text-[var(--text-primary-color)] transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<form id="add-task-form" class="space-y-4">
+<div>
+<label for="task-name-input" class="block text-sm font-medium text-[var(--text-secondary-color)] mb-1">Aufgabenname</label>
+<input id="task-name-input" type="text" required class="form-input w-full rounded-md border border-[var(--surface-border-color)] bg-transparent p-2 text-base font-normal text-[var(--text-primary-color)] placeholder:text-[var(--text-secondary-color)] focus:outline-0 focus:ring-2 focus:ring-[var(--primary-color)]" placeholder="z.B. Designphase abschließen"/>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label for="start-date-input" class="block text-sm font-medium text-[var(--text-secondary-color)] mb-1">Startdatum</label>
+<input id="start-date-input" type="date" required class="form-input w-full rounded-md border border-[var(--surface-border-color)] bg-transparent p-2 text-base font-normal text-[var(--text-primary-color)] placeholder:text-[var(--text-secondary-color)] focus:outline-0 focus:ring-2 focus:ring-[var(--primary-color)]" style="color-scheme: dark;"/>
+</div>
+<div>
+<label for="end-date-input" class="block text-sm font-medium text-[var(--text-secondary-color)] mb-1">Enddatum</label>
+<input id="end-date-input" type="date" required class="form-input w-full rounded-md border border-[var(--surface-border-color)] bg-transparent p-2 text-base font-normal text-[var(--text-primary-color)] placeholder:text-[var(--text-secondary-color)] focus:outline-0 focus:ring-2 focus:ring-[var(--primary-color)]" style="color-scheme: dark;"/>
+</div>
+</div>
+<div>
+<label for="task-color-select" class="block text-sm font-medium text-[var(--text-secondary-color)] mb-1">Farbe</label>
+<select id="task-color-select" class="form-select w-full rounded-md border border-[var(--surface-border-color)] bg-transparent p-2 text-base font-normal text-[var(--text-primary-color)] focus:outline-0 focus:ring-2 focus:ring-[var(--primary-color)]" style="color-scheme: dark;">
+<option value="blue" class="bg-[var(--surface-color)]">Blau</option>
+<option value="green" class="bg-[var(--surface-color)]">Grün</option>
+<option value="yellow" class="bg-[var(--surface-color)]">Gelb</option>
+<option value="red" class="bg-[var(--surface-color)]">Rot</option>
+</select>
+</div>
+<div class="flex justify-end gap-4 pt-6">
+<button id="cancel-task-btn" type="button" class="rounded-md bg-[var(--surface-color)] px-4 py-2 text-sm font-semibold text-[var(--text-primary-color)] border border-[var(--surface-border-color)] hover:bg-[var(--surface-border-color)] transition-colors">Abbrechen</button>
+<button id="save-task-btn" type="submit" class="flex items-center justify-center gap-2 rounded-md bg-[var(--primary-color)] px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-color)]">
+<span class="material-symbols-outlined text-base">save</span>
+<span>Speichern</span>
+</button>
+</div>
+</form>
+</div>
+</div>
+<script src="app.js" defer></script>
+</div>
+</body></html>
