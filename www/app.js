@@ -12,6 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const ganttTimelineHeader = document.getElementById('gantt-timeline-header');
 
     const zoomToFitBtn = document.getElementById('zoom-to-fit-btn');
+    const zoomInBtn = document.getElementById('zoom-in-btn');
+    const zoomOutBtn = document.getElementById('zoom-out-btn');
     // --- Form Inputs ---
     const taskNameInput = document.getElementById('task-name-input');
     const startDateInput = document.getElementById('start-date-input');
@@ -49,6 +51,9 @@ document.addEventListener('DOMContentLoaded', () => {
     ]; // Central state for all tasks
     let currentlyEditingTaskId = null;
     let isZoomedToFit = false;
+    let dayWidth = 50; // Default width for a day in pixels
+    const ZOOM_STEP = 10;
+    const MIN_DAY_WIDTH = 20;
 
     // --- Configuration ---
     const colorMap = {
@@ -111,6 +116,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Main Rendering Orchestrator ---
     const rerenderAll = () => {
         // Sort tasks by start date before rendering
+        // Disable zoom out button if at minimum zoom and not in 'fit' mode
+        zoomOutBtn.disabled = dayWidth <= MIN_DAY_WIDTH && !isZoomedToFit;
+
         tasks.sort((a, b) => parseDate(a.start) - parseDate(b.start));
 
         // 1. Clear all dynamic content
@@ -165,7 +173,6 @@ document.addEventListener('DOMContentLoaded', () => {
             ganttTimelineHeader.style.minWidth = '100%';
             ganttGridContainer.style.minWidth = '100%';
         } else {
-            const dayWidth = 50;
             const chartWidth = totalDays * dayWidth;
             ganttTimelineHeader.style.minWidth = `${chartWidth}px`;
             ganttGridContainer.style.minWidth = `${chartWidth}px`;
@@ -368,6 +375,33 @@ document.addEventListener('DOMContentLoaded', () => {
     closeModalBtn.addEventListener('click', closeModal);
     cancelTaskBtn.addEventListener('click', closeModal);
 
+    // Helper function to reset the 'Anpassen' button to its default state
+    const resetZoomToFitButton = () => {
+        const icon = zoomToFitBtn.querySelector('span.material-symbols-outlined');
+        const text = zoomToFitBtn.querySelector('span:last-child');
+        icon.textContent = 'zoom_out_map';
+        text.textContent = 'Anpassen';
+        zoomToFitBtn.title = 'Alle Aufgaben anzeigen';
+    };
+
+    zoomInBtn.addEventListener('click', () => {
+        dayWidth += ZOOM_STEP;
+        if (isZoomedToFit) {
+            isZoomedToFit = false;
+            resetZoomToFitButton();
+        }
+        rerenderAll();
+    });
+
+    zoomOutBtn.addEventListener('click', () => {
+        dayWidth = Math.max(MIN_DAY_WIDTH, dayWidth - ZOOM_STEP);
+        if (isZoomedToFit) {
+            isZoomedToFit = false;
+            resetZoomToFitButton();
+        }
+        rerenderAll();
+    });
+
     zoomToFitBtn.addEventListener('click', () => {
         isZoomedToFit = !isZoomedToFit;
         const icon = zoomToFitBtn.querySelector('span.material-symbols-outlined');
@@ -378,9 +412,8 @@ document.addEventListener('DOMContentLoaded', () => {
             text.textContent = 'Scrollen';
             zoomToFitBtn.title = 'Zur scrollbaren Ansicht wechseln';
         } else {
-            icon.textContent = 'zoom_out_map';
-            text.textContent = 'Anpassen';
-            zoomToFitBtn.title = 'Alle Aufgaben anzeigen';
+            dayWidth = 50; // Reset to default zoom when exiting fit-to-view
+            resetZoomToFitButton();
         }
         rerenderAll();
     });
