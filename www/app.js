@@ -58,6 +58,25 @@ document.addEventListener('DOMContentLoaded', () => {
         red: 'bg-red-500',
     };
 
+    // --- Helper Functions ---
+    const parseDate = (dateString) => {
+        if (!dateString) return null;
+        const date = new Date(dateString + 'T00:00:00');
+        return isNaN(date.getTime()) ? null : date;
+    };
+    const diffDays = (date1, date2) => Math.round((date2 - date1) / (1000 * 60 * 60 * 24));
+
+    /* For a given date, get the ISO week number */
+    const getWeekNumber = (d) => {
+        d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+        // Set to nearest Thursday: current date + 4 - current day number
+        d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+        // Get first day of year
+        const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+        // Calculate full weeks to nearest Thursday
+        return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+    };
+
     // --- Modal Control Functions ---
     const openModal = (taskId = null) => {
         addTaskForm.reset();
@@ -92,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Main Rendering Orchestrator ---
     const rerenderAll = () => {
         // Sort tasks by start date before rendering
-        tasks.sort((a, b) => new Date(a.start) - new Date(b.start));
+        tasks.sort((a, b) => parseDate(a.start) - parseDate(b.start));
 
         // 1. Clear all dynamic content
         todoListContainer.innerHTML = '';
@@ -109,14 +128,6 @@ document.addEventListener('DOMContentLoaded', () => {
             ganttGridContainer.style.backgroundImage = '';
             return;
         }
-
-        // 2. Determine date range & helpers (more robust date parsing)
-        const parseDate = (dateString) => {
-            if (!dateString) return null;
-            const date = new Date(dateString + 'T00:00:00');
-            return isNaN(date.getTime()) ? null : date;
-        };
-        const diffDays = (date1, date2) => Math.round((date2 - date1) / (1000 * 60 * 60 * 24));
 
         const dates = tasks.flatMap(t => {
             const start = parseDate(t.start);
@@ -138,6 +149,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const projectStartDate = new Date(Math.min(...dates));
         const projectEndDate = new Date(Math.max(...dates));
         const totalDays = diffDays(projectStartDate, projectEndDate) + 1;
+
+        // --- Determine Timeline Granularity ---
+        let timelineUnit = 'day';
+        if (isZoomedToFit) {
+            if (totalDays > 120) { // ~4 months
+                timelineUnit = 'month';
+            } else if (totalDays > 30) { // ~1 month
+                timelineUnit = 'week';
+            }
+        }
 
         // Set min-width for horizontal scrolling or zoom to fit
         if (isZoomedToFit) {
@@ -166,28 +187,65 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // --- Render Header and Grid based on timelineUnit ---
+        let timelineStartDate = projectStartDate;
+        let timelineEndDate = projectEndDate;
+        let totalTimelineUnits = totalDays;
 
-        // Set grid columns for both header and grid container
-        const gridTemplateColumns = `repeat(${totalDays}, minmax(0, 1fr))`;
+        if (timelineUnit === 'day') {
+            totalTimelineUnits = totalDays;
+            for (let i = 0; i < totalTimelineUnits; i++) {
+                const currentDate = new Date(timelineStartDate);
+                currentDate.setDate(timelineStartDate.getDate() + i);
+                const headerEl = document.createElement('div');
+                headerEl.className = 'flex items-center justify-center text-xs text-[var(--text-secondary-color)]';
+                const day = String(currentDate.getDate()).padStart(2, '0');
+                const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+                headerEl.textContent = `${day}.${month}`;
+                ganttTimelineHeader.appendChild(headerEl);
+            }
+        } else if (timelineUnit === 'week') {
+            const firstDay = new Date(projectStartDate);
+            timelineStartDate = new Date(firstDay);
+            timelineStartDate.setDate(firstDay.getDate() - (firstDay.getDay() + 6) % 7); // Monday of start week
+
+            const lastDay = new Date(projectEndDate);
+            timelineEndDate = new Date(lastDay);
+            timelineEndDate.setDate(lastDay.getDate() + (6 - (lastDay.getDay() + 6) % 7)); // Sunday of end week
+
+            totalTimelineUnits = Math.ceil((diffDays(timelineStartDate, timelineEndDate) + 1) / 7);
+
+            let currentWeekStart = new Date(timelineStartDate);
+            for (let i = 0; i < totalTimelineUnits; i++) {
+                const headerEl = document.createElement('div');
+                headerEl.className = 'flex items-center justify-center text-xs text-[var(--text-secondary-color)] whitespace-nowrap px-1';
+                headerEl.textContent = `KW ${getWeekNumber(currentWeekStart)}`;
+                ganttTimelineHeader.appendChild(headerEl);
+                currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+            }
+        } else if (timelineUnit === 'month') {
+            timelineStartDate = new Date(projectStartDate.getFullYear(), projectStartDate.getMonth(), 1);
+            timelineEndDate = new Date(projectEndDate.getFullYear(), projectEndDate.getMonth() + 1, 0); // End of the month
+
+            totalTimelineUnits = (timelineEndDate.getFullYear() - timelineStartDate.getFullYear()) * 12 + (timelineEndDate.getMonth() - timelineStartDate.getMonth()) + 1;
+
+            let currentMonth = new Date(timelineStartDate);
+            for (let i = 0; i < totalTimelineUnits; i++) {
+                const headerEl = document.createElement('div');
+                headerEl.className = 'flex items-center justify-center text-xs text-[var(--text-secondary-color)]';
+                headerEl.textContent = currentMonth.toLocaleDateString('de-DE', { month: 'short', year: '2-digit' });
+                ganttTimelineHeader.appendChild(headerEl);
+                currentMonth.setMonth(currentMonth.getMonth() + 1);
+            }
+        }
+
+        const gridTemplateColumns = `repeat(${totalTimelineUnits}, minmax(0, 1fr))`;
         ganttTimelineHeader.style.gridTemplateColumns = gridTemplateColumns;
         ganttGridContainer.style.gridTemplateColumns = gridTemplateColumns;
 
         // Use CSS background for vertical grid lines instead of DOM elements
         ganttGridContainer.style.backgroundImage = `repeating-linear-gradient(to right, var(--surface-border-color) 0, var(--surface-border-color) 1px, transparent 1px, transparent 100%)`;
-        ganttGridContainer.style.backgroundSize = `${100 / totalDays}% 100%`;
-
-        // 3. Render timeline header and grid lines
-        for (let i = 0; i < totalDays; i++) {
-            const currentDate = new Date(projectStartDate);
-            currentDate.setDate(projectStartDate.getDate() + i);
-            const headerEl = document.createElement('div');
-            headerEl.className = 'flex items-center justify-center text-xs text-[var(--text-secondary-color)]';
-            const day = String(currentDate.getDate()).padStart(2, '0');
-            const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-            headerEl.textContent = `${day}.${month}`;
-            ganttTimelineHeader.appendChild(headerEl);
-
-        }
+        ganttGridContainer.style.backgroundSize = `${100 / totalTimelineUnits}% 100%`;
 
         // 4. Render each task
         tasks.forEach(task => {
@@ -229,18 +287,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 return; // Skip rendering this bar if dates are invalid
             }
 
-            const startOffsetDays = diffDays(projectStartDate, taskStart);
+            const totalTimelineDurationInDays = diffDays(timelineStartDate, timelineEndDate) + 1;
+            const startOffsetDays = diffDays(timelineStartDate, taskStart);
             const durationDays = diffDays(taskStart, taskEnd) + 1;
 
             const barRowContainer = document.createElement('div');
             barRowContainer.className = 'h-12 flex items-center relative px-1';
 
-            if (durationDays > 0 && startOffsetDays >= 0) {
+            if (durationDays > 0 && startOffsetDays >= 0 && totalTimelineDurationInDays > 0) {
                 const barInner = document.createElement('div');
                 barInner.className = `absolute h-8 top-1/2 -translate-y-1/2 rounded-md flex items-center px-2 text-white text-xs font-medium overflow-hidden ${colorMap[task.color] || 'bg-gray-500'}`;
                 barInner.textContent = task.name;
-                barInner.style.left = `${(startOffsetDays / totalDays) * 100}%`;
-                barInner.style.width = `${(durationDays / totalDays) * 100}%`;
+                barInner.style.left = `${(startOffsetDays / totalTimelineDurationInDays) * 100}%`;
+                barInner.style.width = `${(durationDays / totalTimelineDurationInDays) * 100}%`;
                 barRowContainer.appendChild(barInner);
             }
             ganttChartBars.appendChild(barRowContainer);
