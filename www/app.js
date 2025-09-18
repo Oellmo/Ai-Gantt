@@ -52,6 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentlyEditingTaskId = null;
     let isZoomedToFit = false;
     let dayWidth = 50; // Default width for a day in pixels
+    let dataFilePath = 'data.json'; // Default for browser, will be updated by Neutralino
     const ZOOM_STEP = 10;
     const MIN_DAY_WIDTH = 20;
 
@@ -314,15 +315,16 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- Event Handlers ---
-    const toggleTaskCompletion = (taskId, isCompleted) => {
+    const toggleTaskCompletion = async (taskId, isCompleted) => {
         const task = tasks.find(t => t.id === taskId);
         if (task) {
             task.completed = isCompleted;
+            await saveTasks();
             rerenderAll();
         }
     };
 
-    const handleSaveTask = (event) => {
+    const handleSaveTask = async (event) => {
         event.preventDefault();
 
         const taskName = taskNameInput.value.trim();
@@ -364,9 +366,76 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
+        await saveTasks();
         // Trigger a full re-render of the UI from the updated state
         rerenderAll();
         closeModal();
+    };
+
+    const saveTasks = async () => {
+        if (typeof Neutralino !== 'undefined' && Neutralino.filesystem?.writeFile) {
+            // Neutralino mode: Save to file
+            try {
+                console.log(`Saving ${tasks.length} tasks to file...`);
+                await Neutralino.filesystem.writeFile({
+                    path: dataFilePath,
+                    data: JSON.stringify(tasks, null, 2)
+                });
+            } catch (err) {
+                console.error(`Error saving tasks to ${dataFilePath}:`, err);
+                Neutralino.os.showMessageBox('Speicherfehler', `Konnte die Aufgaben nicht speichern: ${err.message}`, 'OK', 'ERROR');
+            }
+        } else {
+            // Browser mode: Save to localStorage
+            try {
+                console.log(`Saving ${tasks.length} tasks to localStorage...`);
+                localStorage.setItem('ai-gantt-tasks', JSON.stringify(tasks));
+            } catch (e) {
+                console.error('Error saving tasks to localStorage:', e);
+                alert('Aufgaben konnten nicht im Browser gespeichert werden.');
+            }
+        }
+    };
+
+    const loadTasks = async () => {
+        if (typeof Neutralino !== 'undefined' && Neutralino.filesystem?.readFile) {
+            // Neutralino mode: Load from file
+            try {
+                const fileContent = await Neutralino.filesystem.readFile({ path: dataFilePath });
+                const loadedTasks = JSON.parse(fileContent);
+                if (Array.isArray(loadedTasks)) {
+                    console.log(`Loaded ${loadedTasks.length} tasks from file.`);
+                    tasks = loadedTasks;
+                }
+            } catch (err) {
+                if (err.code === 'NE_FS_FILRDER') { // File not found, expected on first run
+                    console.log(`${dataFilePath} not found, starting with sample data and creating file.`);
+                    await saveTasks(); // Create the file with initial data
+                } else {
+                    console.error(`Error loading tasks from ${dataFilePath}:`, err);
+                    Neutralino.os.showMessageBox('Ladefehler', `Konnte die Aufgaben nicht laden: ${err.message}`, 'OK', 'ERROR');
+                }
+            }
+        } else {
+            // Browser mode: Load from localStorage
+            try {
+                const storedTasks = localStorage.getItem('ai-gantt-tasks');
+                if (storedTasks) {
+                    const loadedTasks = JSON.parse(storedTasks);
+                    if (Array.isArray(loadedTasks)) {
+                        console.log(`Loaded ${loadedTasks.length} tasks from localStorage.`);
+                        tasks = loadedTasks;
+                    }
+                } else {
+                    // Nothing in storage, so we'll use the initial sample data.
+                    console.log('Keine Aufgaben im localStorage gefunden. Verwende Beispieldaten. Deine Daten werden bei der ersten Änderung gespeichert.');
+                }
+            } catch (e) {
+                console.error("Error loading tasks from localStorage:", e);
+            }
+        }
+
+        rerenderAll(); // Render with loaded or initial tasks
     };
 
     // --- Event Listeners for Modal ---
@@ -446,6 +515,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     addTaskForm.addEventListener('submit', handleSaveTask);
 
-    // Initial render on page load
-    rerenderAll();
+    // --- INITIALIZATION ---
+    const initApp = async () => {
+        // Check if running in Neutralino environment
+        if (typeof Neutralino !== 'undefined') {
+            Neutralino.init();
+            try {
+                // Get the recommended directory for app data, which is writable.
+                const dataDir = await Neutralino.os.getPath('data');
+                // Create the full, absolute path for our data file.
+                dataFilePath = await Neutralino.filesystem.getJoinedPath(dataDir, 'data.json');
+                console.log(`Data will be stored at: ${dataFilePath}`);
+            } catch (err) {
+                console.error("Could not determine data path:", err);
+                Neutralino.os.showMessageBox('Kritischer Fehler', 'Der Speicherpfad für die Daten konnte nicht ermittelt werden. Die App kann keine Daten speichern.', 'OK', 'ERROR');
+                rerenderAll(); // Render with sample data, but saving will fail.
+                return;
+            }
+            Neutralino.events.on('windowClose', () => Neutralino.app.exit());
+            await loadTasks(); // Load tasks (will use file system)
+        } else {
+            // Fallback for running in a regular browser for development
+            console.log("Running in browser mode. Data will be saved to localStorage.");
+            await loadTasks(); // Load tasks (will use localStorage)
+        }
+    };
+
+    initApp();
 });
