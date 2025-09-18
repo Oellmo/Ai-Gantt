@@ -27,7 +27,7 @@ process.stdin.on('data', async (data) => {
             }`;
 
             const completion = await openai.chat.completions.create({
-                model: 'gpt-4-turbo-preview', // Oder ein anderes passendes Modell
+                model: 'gpt-4o-mini', // Oder ein anderes passendes Modell
                 messages: [
                     { role: 'system', content: systemPrompt },
                     { role: 'user', content: prompt },

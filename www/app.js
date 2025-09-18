@@ -265,9 +265,14 @@ document.addEventListener('DOMContentLoaded', () => {
             todoItem.innerHTML = `
                 <input type="checkbox" data-id="${task.id}" class="checkbox-custom h-5 w-5 rounded border-[var(--surface-border-color)] border-2 bg-transparent text-[var(--primary-color)] checked:bg-[var(--primary-color)] checked:border-[var(--primary-color)] focus:ring-2 focus:ring-offset-0 focus:ring-offset-[var(--surface-color)] focus:ring-[var(--primary-color)]" ${task.completed ? 'checked' : ''}>
                 <p class="flex-1 text-base ${task.completed ? 'line-through text-[var(--text-secondary-color)]' : 'text-[var(--text-primary-color)]'}">${task.name}</p>
-                <button class="edit-btn text-[var(--text-secondary-color)] hover:text-[var(--text-primary-color)] transition-colors p-1 rounded-full hover:bg-[var(--surface-border-color)]" data-id="${task.id}">
-                    <span class="material-symbols-outlined text-lg">edit</span>
-                </button>
+                <div class="flex items-center">
+                    <button class="edit-btn text-[var(--text-secondary-color)] hover:text-[var(--text-primary-color)] transition-colors p-1 rounded-full hover:bg-[var(--surface-border-color)]" data-id="${task.id}">
+                        <span class="material-symbols-outlined text-lg">edit</span>
+                    </button>
+                    <button class="delete-btn text-[var(--text-secondary-color)] hover:text-red-500 transition-colors p-1 rounded-full hover:bg-[var(--surface-border-color)]" data-id="${task.id}">
+                        <span class="material-symbols-outlined text-lg">delete</span>
+                    </button>
+                </div>
             `;
             const checkbox = todoItem.querySelector('input[type="checkbox"]');
             checkbox.addEventListener('change', (e) => {
@@ -282,9 +287,14 @@ document.addEventListener('DOMContentLoaded', () => {
             ganttTaskItem.className = 'h-12 flex items-center justify-between px-4 text-sm truncate';
             ganttTaskItem.innerHTML = `
                 <span>${task.name}</span>
-                <button class="edit-btn text-[var(--text-secondary-color)] hover:text-[var(--text-primary-color)] transition-colors p-1 rounded-full hover:bg-[var(--surface-border-color)]" data-id="${task.id}">
-                    <span class="material-symbols-outlined text-lg">edit</span>
-                </button>
+                <div class="flex items-center">
+                    <button class="edit-btn text-[var(--text-secondary-color)] hover:text-[var(--text-primary-color)] transition-colors p-1 rounded-full hover:bg-[var(--surface-border-color)]" data-id="${task.id}">
+                        <span class="material-symbols-outlined text-lg">edit</span>
+                    </button>
+                    <button class="delete-btn text-[var(--text-secondary-color)] hover:text-red-500 transition-colors p-1 rounded-full hover:bg-[var(--surface-border-color)]" data-id="${task.id}">
+                        <span class="material-symbols-outlined text-lg">delete</span>
+                    </button>
+                </div>
             `;
             ganttTaskList.appendChild(ganttTaskItem);
 
@@ -324,6 +334,12 @@ document.addEventListener('DOMContentLoaded', () => {
             await saveTasks();
             rerenderAll();
         }
+    };
+
+    const deleteTask = async (taskId) => {
+        tasks = tasks.filter(t => t.id !== taskId);
+        await saveTasks();
+        rerenderAll();
     };
 
     const handleSaveTask = async (event) => {
@@ -509,6 +525,16 @@ document.addEventListener('DOMContentLoaded', () => {
             event.preventDefault(); // Prevent label from triggering checkbox
             const taskId = Number(editButton.dataset.id);
             openModal(taskId);
+        }
+
+        const deleteButton = event.target.closest('.delete-btn');
+        if (deleteButton) {
+            event.preventDefault(); // Prevent label from triggering checkbox
+            const taskId = Number(deleteButton.dataset.id);
+            const taskToDelete = tasks.find(t => t.id === taskId);
+            if (taskToDelete && confirm(`Sind Sie sicher, dass Sie die Aufgabe "${taskToDelete.name}" löschen möchten?`)) {
+                deleteTask(taskId);
+            }
         }
     };
 
