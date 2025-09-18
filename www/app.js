@@ -317,7 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (durationDays > 0 && startOffsetDays >= 0 && totalTimelineDurationInDays > 0) {
                 const barInner = document.createElement('div');
                 barInner.className = `absolute h-8 top-1/2 -translate-y-1/2 rounded-md flex items-center px-2 text-white text-xs font-medium overflow-hidden ${colorMap[task.color] || 'bg-gray-500'}`;
-                barInner.textContent = task.name;
+                // barInner.textContent = task.name; // Text aus dem Balken entfernt
                 barInner.style.left = `${(startOffsetDays / totalTimelineDurationInDays) * 100}%`;
                 barInner.style.width = `${(durationDays / totalTimelineDurationInDays) * 100}%`;
                 barRowContainer.appendChild(barInner);
