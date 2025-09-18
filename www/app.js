@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const ganttGridContainer = document.getElementById('gantt-grid-container');
     const ganttTimelineHeader = document.getElementById('gantt-timeline-header');
 
+    const zoomToFitBtn = document.getElementById('zoom-to-fit-btn');
     // --- Form Inputs ---
     const taskNameInput = document.getElementById('task-name-input');
     const startDateInput = document.getElementById('start-date-input');
@@ -47,6 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
     ]; // Central state for all tasks
     let currentlyEditingTaskId = null;
+    let isZoomedToFit = false;
 
     // --- Configuration ---
     const colorMap = {
@@ -136,12 +138,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const projectStartDate = new Date(Math.min(...dates));
         const projectEndDate = new Date(Math.max(...dates));
         const totalDays = diffDays(projectStartDate, projectEndDate) + 1;
-        const dayWidth = 50;
-        const chartWidth = totalDays * dayWidth;
 
-        // Set min-width for horizontal scrolling
-        ganttTimelineHeader.style.minWidth = `${chartWidth}px`;
-        ganttGridContainer.style.minWidth = `${chartWidth}px`;
+        // Set min-width for horizontal scrolling or zoom to fit
+        if (isZoomedToFit) {
+            ganttTimelineHeader.style.minWidth = '100%';
+            ganttGridContainer.style.minWidth = '100%';
+        } else {
+            const dayWidth = 50;
+            const chartWidth = totalDays * dayWidth;
+            ganttTimelineHeader.style.minWidth = `${chartWidth}px`;
+            ganttGridContainer.style.minWidth = `${chartWidth}px`;
+        }
 
         // Set the height of the containers that hold the rows.
         // h-12 corresponds to 3rem. This is crucial because gantt-chart-bars is absolutely positioned
@@ -301,6 +308,23 @@ document.addEventListener('DOMContentLoaded', () => {
     openModalBtn.addEventListener('click', () => openModal());
     closeModalBtn.addEventListener('click', closeModal);
     cancelTaskBtn.addEventListener('click', closeModal);
+
+    zoomToFitBtn.addEventListener('click', () => {
+        isZoomedToFit = !isZoomedToFit;
+        const icon = zoomToFitBtn.querySelector('span.material-symbols-outlined');
+        const text = zoomToFitBtn.querySelector('span:last-child');
+
+        if (isZoomedToFit) {
+            icon.textContent = 'fullscreen_exit';
+            text.textContent = 'Scrollen';
+            zoomToFitBtn.title = 'Zur scrollbaren Ansicht wechseln';
+        } else {
+            icon.textContent = 'zoom_out_map';
+            text.textContent = 'Anpassen';
+            zoomToFitBtn.title = 'Alle Aufgaben anzeigen';
+        }
+        rerenderAll();
+    });
 
     // Close modal when clicking on the background overlay
     addTaskModal.addEventListener('click', (event) => {
