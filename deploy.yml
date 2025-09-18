@@ -1,0 +1,40 @@
+# .github/workflows/deploy.yml
+
+name: Build and Deploy to GitHub Pages
+
+# Dieser Workflow wird bei jedem Push auf den `main`-Branch ausgeführt.
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Passe die Node.js-Version an dein Projekt an
+          cache: 'npm'
+
+      - name: Install Dependencies 📦
+        run: npm install
+
+      - name: Build 🏗️
+        # Hier werden die GitHub Secrets als Umgebungsvariablen für den Build-Prozess bereitgestellt.
+        run: npm run build
+        env:
+          # Links steht der Name, den deine App erwartet (z.B. VITE_API_KEY).
+          # Rechts steht der Name des Secrets, den du in GitHub angelegt hast.
+          VITE_API_KEY: ${{ secrets.VITE_API_KEY }}
+          VITE_AUTH_DOMAIN: ${{ secrets.VITE_AUTH_DOMAIN }}
+          # Füge hier alle weiteren Secrets hinzu, die dein Build-Prozess benötigt.
+
+      - name: Deploy 🚀
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist # Der Ordner, der dein gebautes Projekt enthält (z.B. 'dist' oder 'build')

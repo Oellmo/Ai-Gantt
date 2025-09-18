@@ -11,6 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const ganttGridContainer = document.getElementById('gantt-grid-container');
     const ganttTimelineHeader = document.getElementById('gantt-timeline-header');
 
+    const generateBtn = document.getElementById('generate-btn');
+    const aiPromptInput = document.getElementById('ai-prompt-input');
     const zoomToFitBtn = document.getElementById('zoom-to-fit-btn');
     const zoomInBtn = document.getElementById('zoom-in-btn');
     const zoomOutBtn = document.getElementById('zoom-out-btn');
@@ -514,6 +516,49 @@ document.addEventListener('DOMContentLoaded', () => {
     ganttTaskList.addEventListener('click', handleListClick);
 
     addTaskForm.addEventListener('submit', handleSaveTask);
+
+    const handleGenerateTasks = async () => {
+        const prompt = aiPromptInput.value.trim();
+        if (!prompt) {
+            alert('Bitte geben Sie eine Beschreibung für die KI ein.');
+            return;
+        }
+
+        // Visuelles Feedback für den Benutzer, während die KI arbeitet
+        generateBtn.disabled = true;
+        generateBtn.querySelector('span:last-child').textContent = 'Generiere...';
+
+        try {
+            const response = await fetch('/api/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ prompt: prompt }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `HTTP-Fehler: ${response.status}`);
+            }
+
+            const newTasks = await response.json();
+            // Ersetze die bestehenden Aufgaben durch die von der KI generierten
+            tasks = newTasks;
+            await saveTasks();
+            rerenderAll();
+
+        } catch (error) {
+            console.error('Fehler bei der KI-Generierung:', error);
+            alert(`Ein Fehler ist aufgetreten: ${error.message}`);
+        } finally {
+            // Visuelles Feedback zurücksetzen, egal ob erfolgreich oder nicht
+            generateBtn.disabled = false;
+            generateBtn.querySelector('span:last-child').textContent = 'Generieren';
+        }
+    };
+
+    generateBtn.addEventListener('click', handleGenerateTasks);
 
     // --- INITIALIZATION ---
     const initApp = async () => {
